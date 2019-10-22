@@ -1,0 +1,140 @@
+<html>
+
+<head>
+    <script src="https://cdn.bootcss.com/echarts/4.3.0-rc.2/echarts.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.js"></script>
+</head>
+
+
+<body>
+
+    <div>
+        <button onclick="startSensor()">开始mock</button>
+        <button onclick="stopSensor()">结束mock</button>
+    </div>
+    <div id="main" style="width: 1000px;height:500px;"></div>
+
+
+
+    <script>
+        var process = 0;
+        var t;
+        var cnt = 0;
+        function startSensor() {
+            if (process == 1)
+                return ;
+            process = 1;
+            t = setInterval(processSensor, 5);
+        }
+        function stopSensor() {
+            process = 0;
+            clearInterval(t);
+        }
+        function processSensor() {
+
+            $.ajax({
+                type: 'post',
+                url: '/getMockData',
+                async: false,
+                cache: true,
+                dataType: 'json',
+                success: function (data) {
+                    if (cnt++ % 1 == 0) {
+                        refreshData(data);
+                        showData();
+                    }
+
+
+                }
+
+            })
+        };
+
+    </script>
+    <script>
+
+        myChart = echarts.init(document.getElementById('main'));
+        var lengthLimit = 50;
+
+        x = [];
+        y_x = [];
+        y_y = [];
+        y_z = [];
+
+        for (i = 0; i < lengthLimit; i++) {
+            y_x.push(0);
+            y_y.push(0);
+            y_z.push(0);
+            x.push(i);
+
+        }
+        option = {
+            title: {
+                text: '传感器数据mock',
+                subtext: '模拟数据',
+            },
+            legend: {
+          // orient 设置布局方式，默认水平布局，可选值：'horizontal'（水平） ¦ 'vertical'（垂直）
+          orient: 'vertical',
+          // x 设置水平安放位置，默认全图居中，可选值：'center' ¦ 'left' ¦ 'right' ¦ {number}（x坐标，单位px）
+          x: 800,
+          // y 设置垂直安放位置，默认全图顶端，可选值：'top' ¦ 'bottom' ¦ 'center' ¦ {number}（y坐标，单位px）
+          y: 70,
+          data: ['x-Axis','y-Axis','z-Axis']
+        },
+            xAxis: {
+                type: 'category',
+                data: x
+            },
+            yAxis: {
+                type: 'value',
+                min: -5, // 设置y轴刻度的最小值
+                max: 5,  // 设置y轴刻度的最大值
+            },
+            series: [{
+                name: "x-Axis",
+                data: y_x,
+                type: 'line',
+                smooth: true,
+            }, {
+                name: "y-Axis",
+                data: y_y,
+                type: 'line',
+                smooth: true,
+            }, {
+                name: "z-Axis",
+                data: y_z,
+                type: 'line',
+                smooth: true,
+            }]
+        };
+
+        myChart.setOption(option);
+
+        function refreshData(sensorData) {
+            option.series[0].data.push(sensorData.x);
+            option.series[1].data.push(sensorData.y);
+            option.series[2].data.push(sensorData.z);
+            console.log(option.series, sensorData);
+
+            checkLength(option);
+        }
+        function showData() {
+            myChart.setOption(option);
+        }
+        function checkLength(option) {
+            while (option.series[0].data.length > lengthLimit) {
+                option.series[0].data.shift();
+            }
+            while (option.series[1].data.length > lengthLimit) {
+                option.series[1].data.shift();
+            }
+            while (option.series[2].data.length > lengthLimit) {
+                option.series[2].data.shift();
+            }
+        }
+    </script>
+
+</body>
+
+</html>
